@@ -58,6 +58,10 @@ export default function CVModifier() {
       a.click();
 
       setCvModified(true);
+      setError("");
+      setFile(null);
+      setJobDescription("");
+      
     } catch (err: any) {
       setError("An unknown error occurred");
     } finally {
@@ -100,7 +104,9 @@ export default function CVModifier() {
                 />
               </div>
               {fileName && (
-                <p className="mt-2 text-sm text-gray-600">Uploaded: {fileName}</p>
+                <p className="mt-2 text-sm text-gray-600">
+                  Uploaded: {fileName}
+                </p>
               )}
             </div>
 
