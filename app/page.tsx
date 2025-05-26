@@ -7,35 +7,58 @@ export default function CVModifier() {
   const [fileName, setFileName] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [cvModified, setCvModified] = useState(false);
+  const [error, setError] = useState<string | null>(null); // <-- track errors
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const uploadedFile = e.target.files?.[0];
     if (uploadedFile) {
       setFileName(uploadedFile.name);
       setFile(uploadedFile);
+      setError(null);
+      setCvModified(false);
     }
   };
 
   const handleModifyCV = async () => {
-    if (!file || !jobDescription) return;
+    if (!jobDescription && !jobDescription.trim()) {
+      setError("Job Description is required!")
+      return;
+    }
 
-    const formData = new FormData();
-    formData.append("cvFile", file);
-    formData.append("jobDescription", jobDescription);
+    if (!file) {
+      setError("File is required!")
+      return;
+    }
 
-    const res = await fetch("/api/modify-cv", {
-      method: "POST",
-      body: formData,
-    });
+    setError(null);
+    setCvModified(false);
 
-    const blob = await res.blob();
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = fileName || "modified_cv";
-    a.click();
+    try {
+      const formData = new FormData();
+      formData.append("cvFile", file);
+      formData.append("jobDescription", jobDescription);
 
-    setCvModified(true);
+      const res = await fetch("/api/modify-cv", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to modify CV");
+      }
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName || "modified_cv";
+      a.click();
+
+      setCvModified(true);
+    } catch (err: any) {
+      setError("An unknown error occurred");
+    }
   };
 
   return (
@@ -93,6 +116,12 @@ export default function CVModifier() {
             <p className="text-green-600 font-medium">
               Download will start automatically.
             </p>
+          </div>
+        )}
+
+        {error && (
+          <div className="mt-6 p-4 bg-red-100 text-red-700 rounded-md">
+            <strong>Error: </strong> {error}
           </div>
         )}
       </div>
