@@ -1,10 +1,10 @@
-// app/api/modify-cv/route.ts
-
 import { NextRequest, NextResponse } from "next/server";
 import mammoth from "mammoth";
-import pdfParse from "pdf-parse";
+// import pdfParse from "pdf-parse";
 
 export async function POST(req: NextRequest) {
+  const pdfParse = (await import("pdf-parse")).default;
+
   try {
     const formData = await req.formData();
 
