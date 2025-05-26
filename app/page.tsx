@@ -7,7 +7,8 @@ export default function CVModifier() {
   const [fileName, setFileName] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [cvModified, setCvModified] = useState(false);
-  const [error, setError] = useState<string | null>(null); // <-- track errors
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const uploadedFile = e.target.files?.[0];
@@ -20,18 +21,19 @@ export default function CVModifier() {
   };
 
   const handleModifyCV = async () => {
-    if (!jobDescription && !jobDescription.trim()) {
-      setError("Job Description is required!")
+    if (!jobDescription || !jobDescription.trim()) {
+      setError("Job Description is required!");
       return;
     }
 
     if (!file) {
-      setError("File is required!")
+      setError("File is required!");
       return;
     }
 
     setError(null);
     setCvModified(false);
+    setLoading(true);
 
     try {
       const formData = new FormData();
@@ -52,12 +54,14 @@ export default function CVModifier() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = fileName || "modified_cv";
+      a.download = fileName || "modified_cv.txt";
       a.click();
 
       setCvModified(true);
     } catch (err: any) {
       setError("An unknown error occurred");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -72,6 +76,7 @@ export default function CVModifier() {
               Paste Job Description
             </label>
             <textarea
+              disabled={loading}
               className="w-full border border-gray-300 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
               rows={10}
               placeholder="Paste the job description here..."
@@ -87,6 +92,7 @@ export default function CVModifier() {
               </label>
               <div className="flex items-center gap-3">
                 <input
+                  disabled={loading}
                   type="file"
                   accept=".pdf,.doc,.docx"
                   onChange={handleFileUpload}
@@ -94,18 +100,42 @@ export default function CVModifier() {
                 />
               </div>
               {fileName && (
-                <p className="mt-2 text-sm text-gray-600">
-                  Uploaded: {fileName}
-                </p>
+                <p className="mt-2 text-sm text-gray-600">Uploaded: {fileName}</p>
               )}
             </div>
 
             <button
-              className="mt-6 bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-xl font-semibold transition duration-200"
+              className="mt-6 bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-xl font-semibold transition duration-200 flex items-center justify-center"
               onClick={handleModifyCV}
-              disabled={!jobDescription || !file}
+              disabled={loading || !jobDescription || !file}
             >
-              Modify CV
+              {loading ? (
+                <span className="inline-flex items-center">
+                  <svg
+                    className="animate-spin mr-2 h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                    ></path>
+                  </svg>
+                  Loading
+                </span>
+              ) : (
+                "Modify CV"
+              )}
             </button>
           </div>
         </div>
