@@ -27,18 +27,15 @@ export async function POST(req: NextRequest) {
       const texts: string[] = [];
 
       for (const page of pages) {
-        const textContent = await page.getTextContent(); // ⚠️ Not available in pdf-lib
-        texts.push(
-          "PDF parsing is limited in pdf-lib. Use pdf-text-extract or PDF.js for better results."
-        );
-        break; // pdf-lib does not support text extraction; placeholder warning
+        // const textContent = await page.getTextContent(); // ⚠️ Not available in pdf-lib
+        texts.push("PDF parsing is limited in pdf-lib. Use pdf-text-extract or PDF.js for better results.");
+        break;
       }
 
       cvText = texts.join("\n");
     } else if (
       file.name.endsWith(".docx") ||
-      file.type ===
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     ) {
       const docxData = await mammoth.extractRawText({ buffer });
       cvText = docxData.value;
@@ -50,7 +47,7 @@ export async function POST(req: NextRequest) {
     }
 
     const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -68,8 +65,10 @@ export async function POST(req: NextRequest) {
       }
     );
 
+    
     if (!geminiRes.ok) {
-      const errorText = await geminiRes.text();
+        const errorText = await geminiRes.text();
+        console.log(errorText, "geminiRes")
       return NextResponse.json(
         { error: "Failed to fetch from Gemini API", details: errorText },
         { status: 500 }
@@ -78,8 +77,7 @@ export async function POST(req: NextRequest) {
 
     const geminiData = await geminiRes.json();
     const modifiedCV =
-      geminiData.candidates?.[0]?.content?.parts?.[0]?.text ||
-      "No content returned";
+      geminiData.candidates?.[0]?.content?.parts?.[0]?.text || "No content returned";
 
     return new NextResponse(modifiedCV, {
       headers: {

@@ -107,7 +107,7 @@ export default function CVModifier() {
             <button
               className="mt-6 bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-xl font-semibold transition duration-200 flex items-center justify-center"
               onClick={handleModifyCV}
-              disabled={loading || !jobDescription || !file}
+              disabled={loading}
             >
               {loading ? (
                 <span className="inline-flex items-center">
