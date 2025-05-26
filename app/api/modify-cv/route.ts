@@ -28,14 +28,17 @@ export async function POST(req: NextRequest) {
 
       for (const page of pages) {
         // const textContent = await page.getTextContent(); // ⚠️ Not available in pdf-lib
-        texts.push("PDF parsing is limited in pdf-lib. Use pdf-text-extract or PDF.js for better results.");
+        texts.push(
+          "PDF parsing is limited in pdf-lib. Use pdf-text-extract or PDF.js for better results."
+        );
         break;
       }
 
       cvText = texts.join("\n");
     } else if (
       file.name.endsWith(".docx") ||
-      file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      file.type ===
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     ) {
       const docxData = await mammoth.extractRawText({ buffer });
       cvText = docxData.value;
@@ -47,7 +50,7 @@ export async function POST(req: NextRequest) {
     }
 
     const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -65,10 +68,8 @@ export async function POST(req: NextRequest) {
       }
     );
 
-    
     if (!geminiRes.ok) {
-        const errorText = await geminiRes.text();
-        console.log(errorText, "geminiRes")
+      const errorText = await geminiRes.text();
       return NextResponse.json(
         { error: "Failed to fetch from Gemini API", details: errorText },
         { status: 500 }
@@ -76,8 +77,11 @@ export async function POST(req: NextRequest) {
     }
 
     const geminiData = await geminiRes.json();
+
     const modifiedCV =
-      geminiData.candidates?.[0]?.content?.parts?.[0]?.text || "No content returned";
+      geminiData.candidates?.[0]?.content?.parts?.[0]?.text ||
+      "No content returned";
+    console.log(modifiedCV, "modifiedCV");
 
     return new NextResponse(modifiedCV, {
       headers: {
