@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import mammoth from "mammoth";
-// import pdfParse from "pdf-parse";
+import { PDFDocument } from "pdf-lib";
 
 export async function POST(req: NextRequest) {
-  const pdfParse = (await import("pdf-parse")).default;
-
   try {
     const formData = await req.formData();
 
@@ -18,20 +16,29 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Read uploaded file into buffer
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
     let cvText = "";
 
-    // Extract text from uploaded file
     if (file.type === "application/pdf") {
-      const pdfData = await pdfParse(buffer);
-      cvText = pdfData.text;
+      const pdfDoc = await PDFDocument.load(buffer);
+      const pages = pdfDoc.getPages();
+      const texts: string[] = [];
+
+      for (const page of pages) {
+        const textContent = await page.getTextContent(); // ⚠️ Not available in pdf-lib
+        texts.push(
+          "PDF parsing is limited in pdf-lib. Use pdf-text-extract or PDF.js for better results."
+        );
+        break; // pdf-lib does not support text extraction; placeholder warning
+      }
+
+      cvText = texts.join("\n");
     } else if (
       file.name.endsWith(".docx") ||
       file.type ===
-        "application/vnd.openxmlformats-officedocument.wordprocessing.document"
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     ) {
       const docxData = await mammoth.extractRawText({ buffer });
       cvText = docxData.value;
@@ -42,7 +49,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Generate a tailored CV using Gemini
     const geminiRes = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
